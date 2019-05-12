@@ -1,10 +1,8 @@
 import React, { Component, Suspense } from 'react';
 import { connect } from 'dva';
 import { Row, Col, Icon, Menu, Dropdown } from 'antd';
-
 import GridContent from '@/components/PageHeaderWrapper/GridContent';
 import { getTimeDistance } from '@/utils/utils';
-
 import styles from './Analysis.less';
 import PageLoading from '@/components/PageLoading';
 
@@ -20,6 +18,7 @@ const OfflineData = React.lazy(() => import('./OfflineData'));
 }))
 class Analysis extends Component {
   state = {
+    loading: true,
     salesType: 'all',
     currentTabKey: '',
     rangePickerValue: getTimeDistance('year'),
@@ -32,6 +31,11 @@ class Analysis extends Component {
         type: 'chart/fetch',
       });
     });
+    setTimeout(() => {
+      this.setState({
+        loading: false,
+      });
+    }, 2000);
   }
 
   componentWillUnmount() {
@@ -40,7 +44,6 @@ class Analysis extends Component {
       type: 'chart/clear',
     });
     cancelAnimationFrame(this.reqRef);
-    clearTimeout(this.timeoutId);
   }
 
   handleChangeSalesType = e => {
@@ -93,8 +96,9 @@ class Analysis extends Component {
   };
 
   render() {
-    const { rangePickerValue, salesType, currentTabKey } = this.state;
-    const { chart, loading } = this.props;
+    const { rangePickerValue, salesType, currentTabKey, loading: stateLoading } = this.state;
+    const { chart, loading: propsLoading } = this.props;
+    const loading = stateLoading || propsLoading;
     const {
       visitData,
       visitData2,
@@ -144,30 +148,32 @@ class Analysis extends Component {
             selectDate={this.selectDate}
           />
         </Suspense>
-        <Row gutter={24}>
-          <Col xl={12} lg={24} md={24} sm={24} xs={24}>
-            <Suspense fallback={null}>
-              <TopSearch
-                loading={loading}
-                visitData2={visitData2}
-                selectDate={this.selectDate}
-                searchData={searchData}
-                dropdownGroup={dropdownGroup}
-              />
-            </Suspense>
-          </Col>
-          <Col xl={12} lg={24} md={24} sm={24} xs={24}>
-            <Suspense fallback={null}>
-              <ProportionSales
-                dropdownGroup={dropdownGroup}
-                salesType={salesType}
-                loading={loading}
-                salesPieData={salesPieData}
-                handleChangeSalesType={this.handleChangeSalesType}
-              />
-            </Suspense>
-          </Col>
-        </Row>
+        <div className={styles.twoColLayout}>
+          <Row gutter={24} type="flex">
+            <Col xl={12} lg={24} md={24} sm={24} xs={24}>
+              <Suspense fallback={null}>
+                <TopSearch
+                  loading={loading}
+                  visitData2={visitData2}
+                  selectDate={this.selectDate}
+                  searchData={searchData}
+                  dropdownGroup={dropdownGroup}
+                />
+              </Suspense>
+            </Col>
+            <Col xl={12} lg={24} md={24} sm={24} xs={24}>
+              <Suspense fallback={null}>
+                <ProportionSales
+                  dropdownGroup={dropdownGroup}
+                  salesType={salesType}
+                  loading={loading}
+                  salesPieData={salesPieData}
+                  handleChangeSalesType={this.handleChangeSalesType}
+                />
+              </Suspense>
+            </Col>
+          </Row>
+        </div>
         <Suspense fallback={null}>
           <OfflineData
             activeKey={activeKey}
